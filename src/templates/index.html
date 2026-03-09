@@ -272,7 +272,7 @@
         <!-- Add / Edit Product Form -->
         <section class="form-section" aria-labelledby="form-heading">
             <h2 id="form-heading">Add Product</h2>
-            <form id="product-form" novalidate>
+            <form id="product-form">
                 <input type="hidden" id="product-id">
                 <div class="form-group">
                     <label for="product-name">Name <span aria-hidden="true">*</span></label>
@@ -287,7 +287,7 @@
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary" id="submit-btn">Add Product</button>
                     <button type="button" class="btn btn-secondary" id="cancel-btn"
-                        style="display:none;" onclick="cancelEdit()">Cancel</button>
+                        style="display:none;">Cancel</button>
                 </div>
             </form>
         </section>
@@ -311,6 +311,8 @@
         const formHeading = document.getElementById('form-heading');
         const productList = document.getElementById('product-list');
         const statusDiv = document.getElementById('status');
+
+        cancelBtn.addEventListener('click', cancelEdit);
 
         function showStatus(message, type) {
             statusDiv.textContent = message;
