@@ -1,7 +1,12 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, render_template
 from uuid import uuid4
 
 app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # In-memory product store
 data = {}
