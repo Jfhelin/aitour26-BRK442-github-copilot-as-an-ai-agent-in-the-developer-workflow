@@ -9,3 +9,6 @@ Paint & Finishes
 Plumbing
 Power tools
 Storage & organization
+
+2.
+Give me a Python example for using the Azure OpenAI SDK with streaming. Use documentation from MS Learn.
