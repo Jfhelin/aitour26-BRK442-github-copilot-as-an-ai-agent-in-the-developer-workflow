@@ -26,6 +26,7 @@ def test_index_contains_form(client):
     res = client.get('/')
     assert b'product-form' in res.data
     assert b'product-name' in res.data
+    assert b'product-category' in res.data
 
 
 def test_index_contains_product_list(client):
@@ -45,11 +46,12 @@ def test_get_products_empty(client):
 
 def test_create_product(client):
     """POST /products creates a new product."""
-    res = client.post('/products', json={'name': 'test item', 'description': 'test description'})
+    res = client.post('/products', json={'name': 'test item', 'description': 'test description', 'category': 'Hardware'})
     assert res.status_code == 201
     body = res.get_json()
     assert body['name'] == 'test item'
     assert body['description'] == 'test description'
+    assert body['category'] == 'Hardware'
     assert 'id' in body
 
 
@@ -76,13 +78,14 @@ def test_get_product_not_found(client):
 
 def test_update_product(client):
     """PUT /products/<id> updates an existing product."""
-    create_res = client.post('/products', json={'name': 'test item', 'description': 'test description'})
+    create_res = client.post('/products', json={'name': 'test item', 'description': 'test description', 'category': 'Hardware'})
     product_id = create_res.get_json()['id']
-    res = client.put(f'/products/{product_id}', json={'name': 'updated item', 'description': 'updated desc'})
+    res = client.put(f'/products/{product_id}', json={'name': 'updated item', 'description': 'updated desc', 'category': 'Plumbing'})
     assert res.status_code == 200
     body = res.get_json()
     assert body['name'] == 'updated item'
     assert body['description'] == 'updated desc'
+    assert body['category'] == 'Plumbing'
 
 
 def test_update_product_not_found(client):
