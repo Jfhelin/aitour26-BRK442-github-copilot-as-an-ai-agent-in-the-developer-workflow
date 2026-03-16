@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Store</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #16213e;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    header h1 { font-size: 1.5rem; font-weight: 700; }
+    header span { font-size: 1.6rem; }
+
+    main {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    /* Card / Panel */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: #16213e; }
+
+    /* Form */
+    .form-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 160px; }
+    .form-group label { font-size: 0.82rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input {
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-group input:focus { border-color: #4f46e5; }
+
+    /* Buttons */
+    .btn {
+      padding: 0.55rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: #4f46e5; color: #fff; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-secondary { background: #e0e7ff; color: #4f46e5; }
+    .btn-secondary:hover { background: #c7d2fe; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-sm { padding: 0.35rem 0.8rem; font-size: 0.82rem; }
+
+    /* Status messages */
+    #status {
+      font-size: 0.88rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      display: none;
+      margin-top: 0.75rem;
+    }
+    #status.success { background: #d1fae5; color: #065f46; display: block; }
+    #status.error   { background: #fee2e2; color: #991b1b; display: block; }
+
+    /* Loading / empty states */
+    .state-msg {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.95rem;
+      padding: 2rem 0;
+    }
+
+    /* Products list */
+    #products-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .product-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1rem;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fafafa;
+      transition: box-shadow 0.15s;
+    }
+    .product-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+
+    .product-info { flex: 1; min-width: 0; }
+    .product-name { font-weight: 700; font-size: 1rem; color: #111827; word-break: break-word; }
+    .product-desc { font-size: 0.85rem; color: #6b7280; margin-top: 0.15rem; word-break: break-word; }
+    .product-id   { font-size: 0.72rem; color: #d1d5db; margin-top: 0.2rem; font-family: monospace; }
+
+    .product-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+    /* Edit inline form */
+    .edit-form {
+      display: none;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e5e7eb;
+    }
+    .edit-form.visible { display: flex; }
+    .edit-form input {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.45rem 0.65rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .edit-form input:focus { border-color: #4f46e5; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .form-row { flex-direction: column; }
+      .product-item { flex-wrap: wrap; }
+      .product-actions { width: 100%; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>🛍️</span>
+  <h1>Product Store</h1>
+</header>
+
+<main>
+
+  <!-- Add Product Card -->
+  <div class="card">
+    <h2>Add New Product</h2>
+    <form id="add-form" novalidate>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="new-name">Name <span style="color:#b91c1c">*</span></label>
+          <input type="text" id="new-name" placeholder="Product name" required autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="new-desc">Description</label>
+          <input type="text" id="new-desc" placeholder="Optional description" autocomplete="off" />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Product</button>
+      </div>
+      <div id="status" role="alert" aria-live="polite"></div>
+    </form>
+  </div>
+
+  <!-- Products List Card -->
+  <div class="card">
+    <h2>Products</h2>
+    <div id="loading-msg" class="state-msg" aria-live="polite">Loading products…</div>
+    <div id="products-list" aria-label="Product list"></div>
+  </div>
+
+</main>
+
+<script>
+  const API = '/products';
+
+  // --- Utility ---
+  function showStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = type; // 'success' or 'error'
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => { el.className = ''; el.textContent = ''; }, 4000);
+  }
+
+  // --- Fetch helpers ---
+  async function apiFetch(url, options = {}) {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}${text ? ': ' + text : ''}`);
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  // --- Render ---
+  function renderProducts(products) {
+    const list = document.getElementById('products-list');
+    const loadingMsg = document.getElementById('loading-msg');
+    loadingMsg.style.display = 'none';
+
+    if (!products.length) {
+      list.innerHTML = '<p class="state-msg">No products yet. Add one above!</p>';
+      return;
+    }
+
+    list.innerHTML = '';
+    products.forEach(p => list.appendChild(createProductEl(p)));
+  }
+
+  function createProductEl(p) {
+    const item = document.createElement('div');
+    item.className = 'product-item';
+    item.dataset.id = p.id;
+    item.setAttribute('role', 'listitem');
+
+    item.innerHTML = `
+      <div class="product-info">
+        <div class="product-name">${escHtml(p.name)}</div>
+        <div class="product-desc">${p.description ? escHtml(p.description) : '<em style="color:#d1d5db">No description</em>'}</div>
+        <div class="product-id">${escHtml(p.id)}</div>
+        <div class="edit-form">
+          <input type="text" class="edit-name" value="${escAttr(p.name)}" placeholder="Name" aria-label="Edit name" />
+          <input type="text" class="edit-desc" value="${escAttr(p.description)}" placeholder="Description" aria-label="Edit description" />
+          <button class="btn btn-secondary btn-sm save-btn">Save</button>
+          <button class="btn btn-sm cancel-btn" style="background:#f3f4f6;color:#374151;">Cancel</button>
+        </div>
+      </div>
+      <div class="product-actions">
+        <button class="btn btn-secondary btn-sm edit-btn" aria-label="Edit ${escAttr(p.name)}">Edit</button>
+        <button class="btn btn-danger btn-sm delete-btn" aria-label="Delete ${escAttr(p.name)}">Delete</button>
+      </div>`;
+
+    const editForm = item.querySelector('.edit-form');
+
+    // Edit button
+    item.querySelector('.edit-btn').addEventListener('click', () => {
+      editForm.classList.toggle('visible');
+    });
+
+    // Cancel button
+    item.querySelector('.cancel-btn').addEventListener('click', () => {
+      editForm.classList.remove('visible');
+    });
+
+    // Save button
+    item.querySelector('.save-btn').addEventListener('click', () => saveProduct(p.id, item));
+
+    // Delete button
+    item.querySelector('.delete-btn').addEventListener('click', () => deleteProduct(p.id, item));
+
+    return item;
+  }
+
+  function escHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function escAttr(str) { return escHtml(str); }
+
+  // --- Load all products ---
+  async function loadProducts() {
+    const loadingMsg = document.getElementById('loading-msg');
+    const list = document.getElementById('products-list');
+    loadingMsg.style.display = '';
+    loadingMsg.textContent = 'Loading products…';
+    list.innerHTML = '';
+    try {
+      const products = await apiFetch(API);
+      renderProducts(products);
+    } catch (err) {
+      loadingMsg.textContent = 'Failed to load products. Is the server running?';
+      loadingMsg.style.color = '#b91c1c';
+    }
+  }
+
+  // --- Add product ---
+  document.getElementById('add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nameInput = document.getElementById('new-name');
+    const descInput = document.getElementById('new-desc');
+    const name = nameInput.value.trim();
+    const description = descInput.value.trim();
+
+    if (!name) {
+      showStatus('Product name is required.', 'error');
+      nameInput.focus();
+      return;
+    }
+
+    try {
+      await apiFetch(API, {
+        method: 'POST',
+        body: JSON.stringify({ name, description }),
+      });
+      nameInput.value = '';
+      descInput.value = '';
+      showStatus('Product added successfully!', 'success');
+      await loadProducts();
+    } catch (err) {
+      showStatus('Failed to add product: ' + err.message, 'error');
+    }
+  });
+
+  // --- Save (update) product ---
+  async function saveProduct(id, item) {
+    const name = item.querySelector('.edit-name').value.trim();
+    const description = item.querySelector('.edit-desc').value.trim();
+
+    if (!name) {
+      showStatus('Product name is required.', 'error');
+      return;
+    }
+
+    try {
+      await apiFetch(`${API}/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, description }),
+      });
+      await loadProducts();
+    } catch (err) {
+      showStatus('Failed to update product: ' + err.message, 'error');
+    }
+  }
+
+  // --- Delete product ---
+  async function deleteProduct(id, item) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await apiFetch(`${API}/${id}`, { method: 'DELETE' });
+      item.remove();
+      // Check if list is now empty
+      const list = document.getElementById('products-list');
+      if (!list.children.length) {
+        list.innerHTML = '<p class="state-msg">No products yet. Add one above!</p>';
+      }
+    } catch (err) {
+      showStatus('Failed to delete product: ' + err.message, 'error');
+    }
+  }
+
+  // --- Init ---
+  loadProducts();
+</script>
+
+</body>
+</html>
