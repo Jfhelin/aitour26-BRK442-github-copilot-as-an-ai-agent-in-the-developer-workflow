@@ -56,7 +56,17 @@
       transition: border-color 0.2s;
       outline: none;
     }
-    .form-group input:focus { border-color: #4f46e5; }
+    .form-group select {
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      outline: none;
+      background: #fff;
+      cursor: pointer;
+    }
+    .form-group select:focus { border-color: #4f46e5; }
 
     /* Buttons */
     .btn {
@@ -115,6 +125,16 @@
     .product-info { flex: 1; min-width: 0; }
     .product-name { font-weight: 700; font-size: 1rem; color: #111827; word-break: break-word; }
     .product-desc { font-size: 0.85rem; color: #6b7280; margin-top: 0.15rem; word-break: break-word; }
+    .product-category {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #4f46e5;
+      background: #e0e7ff;
+      border-radius: 999px;
+      padding: 0.15rem 0.65rem;
+      margin-top: 0.35rem;
+    }
     .product-id   { font-size: 0.72rem; color: #d1d5db; margin-top: 0.2rem; font-family: monospace; }
 
     .product-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
@@ -129,7 +149,8 @@
       border-top: 1px solid #e5e7eb;
     }
     .edit-form.visible { display: flex; }
-    .edit-form input {
+    .edit-form input,
+    .edit-form select {
       flex: 1;
       min-width: 120px;
       padding: 0.45rem 0.65rem;
@@ -137,8 +158,10 @@
       border-radius: 8px;
       font-size: 0.9rem;
       outline: none;
+      background: #fff;
     }
-    .edit-form input:focus { border-color: #4f46e5; }
+    .edit-form input:focus,
+    .edit-form select:focus { border-color: #4f46e5; }
 
     /* Responsive */
     @media (max-width: 600px) {
@@ -170,6 +193,21 @@
           <label for="new-desc">Description</label>
           <input type="text" id="new-desc" placeholder="Optional description" autocomplete="off" />
         </div>
+        <div class="form-group">
+          <label for="new-cat">Category</label>
+          <select id="new-cat" aria-label="Category">
+            <option value="">-- Select category --</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Garden &amp; Outdoor">Garden &amp; Outdoor</option>
+            <option value="Hand tools">Hand tools</option>
+            <option value="Hardware">Hardware</option>
+            <option value="Lumber &amp; Building materials">Lumber &amp; Building materials</option>
+            <option value="Paint &amp; Finishes">Paint &amp; Finishes</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Power tools">Power tools</option>
+            <option value="Storage &amp; organization">Storage &amp; organization</option>
+          </select>
+        </div>
         <button type="submit" class="btn btn-primary">Add Product</button>
       </div>
       <div id="status" role="alert" aria-live="polite"></div>
@@ -187,6 +225,25 @@
 
 <script>
   const API = '/products';
+
+  const CATEGORIES = [
+    'Electrical',
+    'Garden & Outdoor',
+    'Hand tools',
+    'Hardware',
+    'Lumber & Building materials',
+    'Paint & Finishes',
+    'Plumbing',
+    'Power tools',
+    'Storage & organization',
+  ];
+
+  function buildCategoryOptions(selected) {
+    const opts = CATEGORIES.map(c =>
+      `<option value="${escAttr(c)}"${c === selected ? ' selected' : ''}>${escHtml(c)}</option>`
+    ).join('');
+    return `<option value="">-- Select category --</option>${opts}`;
+  }
 
   // --- Utility ---
   function showStatus(msg, type) {
@@ -236,10 +293,12 @@
       <div class="product-info">
         <div class="product-name">${escHtml(p.name)}</div>
         <div class="product-desc">${p.description ? escHtml(p.description) : '<em style="color:#d1d5db">No description</em>'}</div>
+        ${p.category ? `<span class="product-category">${escHtml(p.category)}</span>` : ''}
         <div class="product-id">${escHtml(p.id)}</div>
         <div class="edit-form">
           <input type="text" class="edit-name" value="${escAttr(p.name)}" placeholder="Name" aria-label="Edit name" />
           <input type="text" class="edit-desc" value="${escAttr(p.description)}" placeholder="Description" aria-label="Edit description" />
+          <select class="edit-cat" aria-label="Edit category">${buildCategoryOptions(p.category)}</select>
           <button class="btn btn-secondary btn-sm save-btn">Save</button>
           <button class="btn btn-sm cancel-btn" style="background:#f3f4f6;color:#374151;">Cancel</button>
         </div>
@@ -300,8 +359,10 @@
     e.preventDefault();
     const nameInput = document.getElementById('new-name');
     const descInput = document.getElementById('new-desc');
+    const catInput  = document.getElementById('new-cat');
     const name = nameInput.value.trim();
     const description = descInput.value.trim();
+    const category = catInput.value;
 
     if (!name) {
       showStatus('Product name is required.', 'error');
@@ -312,10 +373,11 @@
     try {
       await apiFetch(API, {
         method: 'POST',
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ name, description, category }),
       });
       nameInput.value = '';
       descInput.value = '';
+      catInput.value = '';
       showStatus('Product added successfully!', 'success');
       await loadProducts();
     } catch (err) {
@@ -327,6 +389,7 @@
   async function saveProduct(id, item) {
     const name = item.querySelector('.edit-name').value.trim();
     const description = item.querySelector('.edit-desc').value.trim();
+    const category = item.querySelector('.edit-cat').value;
 
     if (!name) {
       showStatus('Product name is required.', 'error');
@@ -336,7 +399,7 @@
     try {
       await apiFetch(`${API}/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ name, description, category }),
       });
       await loadProducts();
     } catch (err) {
